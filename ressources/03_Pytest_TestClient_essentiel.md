@@ -94,7 +94,7 @@ def valid_payload() -> dict:
     """A valid loan application payload aligned with feature_columns."""
     return {
         "loan_amnt": 10000,
-        "term": " 36 months",
+        "term": "36 months",
         "int_rate": 12.5,
         "annual_inc": 60000,
         "purpose": "debt_consolidation",
@@ -253,10 +253,23 @@ Lance : `pytest -v` → 6 tests passent.
 4. **Lance les tests dans le container** — attention au piège : le
    `.dockerignore` du mini-cours 02 exclut volontairement `tests/` de
    l'image de prod (pour ne pas embarquer les tests dans le livrable client).
-   Deux options propres :
+   Deux options propres, **commence par la A qui marche tout de suite** :
 
-   **Option A** — un `Dockerfile.test` dédié qui repart de l'image de prod
-   et ajoute `tests/` + `pytest` :
+   **Option A — volume monté au runtime** (la voie rapide en M1, recommandée
+   pour le dev itératif et pour ce brief) :
+
+   ```bash
+   docker run --rm -v $(pwd)/tests:/home/appuser/app/tests \
+       --entrypoint sh pyrenex-risk-api:v0.1.0 \
+       -c "pip install --quiet pytest httpx && pytest -v"
+   ```
+
+   Le `.dockerignore` n'intervient pas ici (rien n'est copié à la build), le
+   dossier `tests/` du host est exposé en lecture dans le container au
+   runtime. Idéal pour fail-fast en local.
+
+   **Option B — `Dockerfile.test` dédié** (la voie CI/CD propre, à venir
+   en M5) :
 
    ```dockerfile
    # Dockerfile.test
@@ -271,15 +284,13 @@ Lance : `pytest -v` → 6 tests passent.
    docker run --rm pyrenex-risk-api:v0.1.0-test
    ```
 
-   **Option B** — monter `tests/` en volume au runtime :
-
-   ```bash
-   docker run --rm -v $(pwd)/tests:/home/appuser/app/tests \
-       --entrypoint pytest pyrenex-risk-api:v0.1.0 -v
-   ```
-
-   Préfère l'option A en CI/CD (reproductible, image dédiée tagguée). L'option
-   B est pratique en dev itératif.
+   ⚠️ **Subtilité** : tel quel ce build échoue avec
+   `"/tests": not found` car le `.dockerignore` exclut `tests/` du contexte
+   de build. Deux contournements propres en M5 (au choix) :
+   - créer un `.dockerignore` dédié `Dockerfile.test.dockerignore` qui
+     n'exclut pas `tests/` (depuis Docker 25+, syntaxe `# syntax=docker/dockerfile:1.7-labs` + variable `BUILDKIT_DOCKERFILE`),
+   - ou retirer temporairement `tests/` du `.dockerignore` le temps du
+     build (cf. workflow CI/CD M5).
 5. **Bonus** : ajoute un test `test_predict_is_deterministic` (cf. ci-dessus).
 
 **Solution attendue (point 3)** : 3/3 verts en local, **vert immédiatement

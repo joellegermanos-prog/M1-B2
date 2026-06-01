@@ -53,10 +53,11 @@ Dernière vérification : 2026-05-18
 
 - **FastAPI — examples** : <https://github.com/tiangolo/fastapi/tree/master/docs_src>
   - État : ✅ vérifié le 2026-05-18
-- **Repo cours ATOS — squelette M1-B2** : <https://github.com/Formation-SIMPLON-IA/ia-atos-parcours/tree/main/briefs/M1-B2/squelette>
-  - État : ✅ vérifié le 2026-05-18
+- **Repo template M1-B2** (Formation-SIMPLON-IA) : <https://github.com/Formation-SIMPLON-IA/ia-atos-parcours-m1-b2>
+  - Accès via *« Use this template »* — crée ton repo perso `M1-B2-scoring-api-<prénom>`
+  - État : ✅ accessible aux membres de l'organisation (privé)
 
-## Livres (référencés dans CLAUDE.md, non-publics)
+## Livres (bibliothèque interne formatrice, non-publics)
 
 - **Building Data Science Applications with FastAPI** (Voron) — disponible
   dans `/BOOK/`. Chapitres ML serving, monitoring, Docker.

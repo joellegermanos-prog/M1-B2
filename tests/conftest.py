@@ -23,7 +23,7 @@ def valid_payload() -> dict:
     """
     return {
         "loan_amnt": 10000,
-        "term": " 36 months",
+        "term": "36 months",
         "int_rate": 12.5,
         "annual_inc": 60000,
         "purpose": "debt_consolidation",

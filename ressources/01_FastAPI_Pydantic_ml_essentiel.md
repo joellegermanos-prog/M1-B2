@@ -69,7 +69,7 @@ class LoanApplication(BaseModel):
     """Input schema aligned with pyrenex_risk_v2 feature_columns."""
 
     loan_amnt: float = Field(..., ge=500, le=40_000, description="Loan amount in USD")
-    term: str = Field(..., pattern=r"^( 36 months| 60 months)$")
+    term: str = Field(..., pattern=r"^(36 months|60 months)$")
     int_rate: float = Field(..., ge=0, le=50, description="Interest rate percent")
     annual_inc: float = Field(..., ge=0, le=10_000_000)
     purpose: str
@@ -287,6 +287,7 @@ fautif et la règle violée (`field required`, `value is not a valid float`,
 | Renvoyer 200 avec une erreur dans `detail` | Le client API ne sait pas qu'il y a eu un problème |
 | Oublier `response_model=Prediction` | Pas de validation de **sortie**, pas de doc Swagger côté retour |
 | `model.predict(application.model_dump())` au lieu de `DataFrame` | sklearn attend un 2D array — passage en `pd.DataFrame([dict])` |
+| Coder le schéma Pydantic **sans avoir vérifié les modalités réelles** du CSV (espaces, casse, accents) | Modalités du payload ≠ modalités d'entraînement → soit 422 si tu utilises `Literal` strict, soit pire : `OneHotEncoder(handle_unknown="ignore")` retourne `[0, …, 0]` silencieusement → **prédiction biaisée stable** (toutes les requêtes renvoient quasi la même proba sans erreur visible). **Toujours** lancer `df["term"].unique()`, `df["grade"].unique()`, etc. avant de figer le schéma. Pour Lending Club spécifiquement : `"36 months"` / `"60 months"` (sans espace). |
 
 ### Symptôme → cause probable
 
@@ -298,6 +299,7 @@ fautif et la règle violée (`field required`, `value is not a valid float`,
 | 500 sur n'importe quel input même valide | `joblib.load` a échoué — chemin du modèle erroné dans `lifespan` |
 | `model_version` manquant dans `/info` | `.json` métadonnées non chargé — vérifier `lifespan` |
 | Latence > 100 ms par requête sur RandomForest | Chargement à chaque requête ou prediction en boucle Python (1 ligne à la fois) |
+| `/predict` retourne 200 mais probabilités quasi identiques sur tous les payloads | Modalités catégorielles du payload **ignorées** par le `OneHotEncoder(handle_unknown="ignore")` car non vues à l'entraînement (mauvaise casse, espace en trop ou en moins, accent) → toutes les lignes finissent avec un vecteur OneHot vide. Lancer `df["term"].unique()` côté training et comparer aux valeurs envoyées. |
 
 > 🚀 **Cap vers M5 — ce qui s'ajoute en production** : authentification
 > (Bearer token, OAuth2 via Keycloak ou équivalent), CORS configuré sur les
@@ -313,7 +315,7 @@ fautif et la règle violée (`field required`, `value is not a valid float`,
 - Doc officielle : [Pydantic v2 — Fields](https://docs.pydantic.dev/latest/concepts/fields/)
 - Doc officielle : [FastAPI — Body validation](https://fastapi.tiangolo.com/tutorial/body/)
 - Article : [Sebastián Ramírez — FastAPI for ML](https://fastapi.tiangolo.com/python-types/)
-- Pour M5 : *Serving ML at scale*, livre **Building Data Science Applications with FastAPI** (cf. CLAUDE.md /BOOK/) — chapitres sur monitoring et CI/CD.
+- Pour M5 : *Serving ML at scale*, livre **Building Data Science Applications with FastAPI** (référence bibliothèque interne, dispo auprès de la formatrice) — chapitres sur monitoring et CI/CD.
 
 ## Vérification (checklist apprenant)
 

@@ -46,8 +46,9 @@ M1-B2-scoring-api-<prenom>/
 │   └── middleware.py            # LoggingMiddleware Loguru
 ├── tests/
 │   ├── __init__.py
-│   ├── conftest.py              # fixtures pytest
-│   └── test_api.py              # tests à compléter
+│   ├── conftest.py              # fixtures pytest (client + valid_payload)
+│   ├── test_model_contract.py   # test 0 — valide le .joblib avant l'API
+│   └── test_api.py              # tests routes /health, /info, /predict
 ├── models/                      # ton .joblib + .json depuis M1-B1
 │   └── .gitkeep
 ├── logs/                        # logs rotatifs (gitignored)
@@ -110,8 +111,12 @@ Le service ne démarre pas sans ces 2 fichiers.
 
 ### Async jeudi/vendredi matin (6 h)
 
-5. **Tests pytest** (≥ 3) en local **et** dans le container (1 h 30)
-6. **Loguru middleware** avec `request_id` + rotation logs (45 min)
+5. **Contract test** d'abord (`test_model_contract.py`) puis **tests d'API**
+   (≥ 3) en local **et** dans le container — **volume monté** en priorité
+   (voie rapide), `Dockerfile.test` en option CI/CD (cf. mini-cours 03)
+   (1 h 30)
+6. **Loguru middleware** avec `request_id` + format JSON + rotation logs.
+   ⚠️ **Aucune PII** dans les logs (cf. mini-cours 04) (45 min)
 7. **README complet** + schéma Mermaid + tag `v0.1.0-api` (2 h)
 8. **Finition** + préparation RDV vendredi (1 h 45)
 

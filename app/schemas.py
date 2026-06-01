@@ -17,7 +17,7 @@ class LoanApplication(BaseModel):
     """
 
     loan_amnt: float = Field(..., ge=500, le=40_000, description="Loan amount (USD)")
-    term: str = Field(..., description="Loan term, e.g. ' 36 months' or ' 60 months'")
+    term: str = Field(..., description="Loan term, e.g. '36 months' or '60 months'")
     int_rate: float = Field(..., ge=0, le=50, description="Interest rate (%)")
     annual_inc: float = Field(..., ge=0, le=10_000_000, description="Annual income (USD)")
     purpose: str = Field(..., description="Purpose of the loan")
