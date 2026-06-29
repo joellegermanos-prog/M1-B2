@@ -15,18 +15,26 @@ def test_health_returns_ok(client: TestClient) -> None:
     assert response.json() == {"status": "ok"}
 
 
+def test_info_exposes_version(client: TestClient) -> None:
+    response = client.get("/info")
+    assert response.status_code == 200
+    data = response.json()
+    assert "model_version" in data
+    assert "created_at" in data
+
+
 def test_predict_valid_payload(client: TestClient, valid_payload: dict) -> None:
     """/predict returns 200 with a well-formed response on valid input.
 
     TODO — Uncomment once /predict is implemented in app/main.py.
     """
-    # response = client.post("/predict", json=valid_payload)
-    # assert response.status_code == 200
-    # data = response.json()
-    # assert data["prediction"] in (0, 1)
-    # assert 0.0 <= data["probability"] <= 1.0
-    # assert "request_id" in data
-    # assert "model_version" in data
+    response = client.post("/predict", json=valid_payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["prediction"] in (0, 1)
+    assert 0.0 <= data["probability"] <= 1.0
+    assert "request_id" in data
+    assert "model_version" in data
     pass
 
 
@@ -37,11 +45,21 @@ def test_predict_missing_field_returns_422(
 
     TODO — Uncomment once /predict is implemented.
     """
-    # invalid = {k: v for k, v in valid_payload.items() if k != "loan_amnt"}
-    # response = client.post("/predict", json=invalid)
-    # assert response.status_code == 422
-    # assert "loan_amnt" in response.text
+    invalid = {k: v for k, v in valid_payload.items() if k != "loan_amnt"}
+    response = client.post("/predict", json=invalid)
+    assert response.status_code == 422
+    assert "loan_amnt" in response.text
     pass
 
+def test_predict_out_of_bounds_returns_422(client: TestClient, valid_payload: dict) -> None:
+    invalid = {**valid_payload, "loan_amnt": -1000}
+    response = client.post("/predict", json=invalid)
+    assert response.status_code == 422
+
+def test_predict_is_deterministic(client: TestClient, valid_payload: dict) -> None:
+    r1 = client.post("/predict", json=valid_payload).json()
+    r2 = client.post("/predict", json=valid_payload).json()
+    assert r1["prediction"] == r2["prediction"]
+    assert abs(r1["probability"] - r2["probability"]) < 1e-9   
 
 # TODO — Add at least one bonus test (e.g. test_predict_is_deterministic)

@@ -6,8 +6,13 @@
 > C'est ce nouveau repo que tu cloneras pour travailler.
 
 ---
+##  Schéma Mermaid
 
-## 🚀 Démarrage (4 commandes)
+![alt text](image.png)
+
+##  Démarrage 
+
+Sans Docker :
 
 ```bash
 # 0. Clone ton repo perso fraîchement créé
@@ -33,9 +38,108 @@ curl http://localhost:8000/info
 pytest -v                                              # → 1 test exemple passe
 ```
 
+
+Docker:
+
+# Build
+docker build -t pyrenex-risk-api:v0.1.0 .
+
+# Run
+docker run -d -p 8000:8000 --name pyrenex-api pyrenex-risk-api:v0.1.0
+
+# Vérif
+docker ps                                       # → STATUS doit contenir (healthy)
+curl http://localhost:8000/health               # → {"status": "ok"}
+curl http://localhost:8000/info                 # → JSON métadonnées
+
+# Stop
+docker stop pyrenex-api && docker rm pyrenex-api
+
 ---
 
-## 📁 Structure du repo
+## Exemples
+
+# GET /health
+curl http://localhost:8000/health
+Response: 
+{"status":"ok"}
+
+
+# GET /info
+curl http://localhost:8000/info
+Response:
+{
+  "api_version": "0.1.0",
+  "model_name": "pyrenex_risk_v2",
+  "model_version": "v2.0.0",
+  "created_at": "2026-06-28T01:36:16.217249+00:00",
+  "sklearn_version": "1.8.0",
+  "dataset_sha256": "d2da093bee40024b196e73a0d2d763193782f947e3d60552a3d7bbad0bd944e3",
+  "metrics_holdout": {
+    "f1_macro": 0.6123,
+    "roc_auc": 0.7442
+  }
+}
+
+# GET /info
+curl http://localhost:8000/info
+Response:
+
+
+# POST /predict
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+  "loan_amnt": 500,
+  "term": "string",
+  "int_rate": 50,
+  "installment": 0,
+  "grade": "E",
+  "emp_length": "string",
+  "home_ownership": "string",
+  "annual_inc": 10000000,
+  "verification_status": "string",
+  "purpose": "string",
+  "dti": 100,
+  "delinq_2yrs": 0,
+  "fico_range_low": 300,
+  "revol_util": 150
+}
+Response:
+{
+  "prediction": 1,
+  "probability": 0.8075817529816266,
+  "model_version": "v2.0.0",
+  "request_id": "ff2e28d6-27a5-4d8a-8d05-bf0aea990274"
+}
+
+
+
+
+## Testing
+
+# Contract test
+pytest tests/test_model_contract.py -v
+
+# API tests
+pytest tests/test_api.py -v
+
+# All tests
+pytest -v
+
+
+## Logging
+
+All requests are logged as structured JSON to logs/api.log
+
+
+## Versioning
+
+API: MAJOR (v1.0.0 → v2.0.0) / MINOR (v2.0.0 → v2.1.0) / PATCH (v2.0.0 → v2.0.1)
+Model: vMAJOR.MINOR.PATCH (tag du modèle (M1-B1, repo de scoring))
+Git tags: v<API_VERSION>-api (API est validée)
+
+## Structure du repo
 
 ```
 M1-B2-scoring-api-<prenom>/
@@ -60,82 +164,18 @@ M1-B2-scoring-api-<prenom>/
 │   ├── 04_Loguru_middleware_essentiel.md
 │   ├── 05_Versionning_modele_essentiel.md
 │   ├── liens_officiels.md
-│   └── README.md                # ordre de mobilisation + objectifs
-├── Dockerfile                   # à compléter (cf. ressources/02)
+│   └── README.md                
+├── Dockerfile                   
 ├── .dockerignore
 ├── .gitignore
 ├── requirements.txt
-└── README.md (ce fichier — à compléter avec schéma Mermaid + démarrage)
+├── LOGGING.md
+└── README.md (ce fichier)
 ```
 
 ---
 
-## 📚 Mini-cours d'appui
-
-Les **5 mini-cours pédagogiques** du brief sont fournis dans
-[`./ressources/`](./ressources/). Lecture juste-à-temps, ~15-20 min chacun :
-
-| Tâche | Mini-cours |
-|---|---|
-| Routes FastAPI + Pydantic ML | [`01_FastAPI_Pydantic_ml_essentiel.md`](./ressources/01_FastAPI_Pydantic_ml_essentiel.md) |
-| Dockerfile Python production | [`02_Dockerfile_Python_essentiel.md`](./ressources/02_Dockerfile_Python_essentiel.md) |
-| Tests pytest + TestClient | [`03_Pytest_TestClient_essentiel.md`](./ressources/03_Pytest_TestClient_essentiel.md) |
-| Loguru middleware structuré | [`04_Loguru_middleware_essentiel.md`](./ressources/04_Loguru_middleware_essentiel.md) |
-| Versionning sémantique modèle | [`05_Versionning_modele_essentiel.md`](./ressources/05_Versionning_modele_essentiel.md) |
-
-Cf. [`./ressources/README.md`](./ressources/README.md) pour l'ordre de mobilisation détaillé.
-
----
-
-## 📥 Modèle (depuis M1-B1)
-
-**Avant tout**, copie ton modèle M1-B1 :
-
-```bash
-cp ../M1-B1-scoring-<prenom>/models/pyrenex_risk_v2.joblib ./models/
-cp ../M1-B1-scoring-<prenom>/models/pyrenex_risk_v2.json   ./models/
-```
-
-Le service ne démarre pas sans ces 2 fichiers.
-
----
-
-## 🧭 Démarche attendue
-
-### Mercredi sync (2 h 15)
-
-1. **Sanity check** : recharger le `.joblib` dans un script séparé (5 min)
-2. **Squelette FastAPI** : `/health`, `/info`, `/predict` (1 h 15)
-3. **Dockerfile minimal** : build + run + curl OK (30 min)
-4. **Tour de table** Discord 11h30 : démo curl + discussion versionning (30 min)
-
-### Async jeudi/vendredi matin (6 h)
-
-5. **Contract test** d'abord (`test_model_contract.py`) puis **tests d'API**
-   (≥ 3) en local **et** dans le container — **volume monté** en priorité
-   (voie rapide), `Dockerfile.test` en option CI/CD (cf. mini-cours 03)
-   (1 h 30)
-6. **Loguru middleware** avec `request_id` + format JSON + rotation logs.
-   ⚠️ **Aucune PII** dans les logs (cf. mini-cours 04) (45 min)
-7. **README complet** + schéma Mermaid + tag `v0.1.0-api` (2 h)
-8. **Finition** + préparation RDV vendredi (1 h 45)
-
-Mini-cours d'appui : voir [`./ressources/`](./ressources/).
-
----
-
-## ✅ Conventions de code
-
-- Python 3.11+
-- Type hints sur toutes les signatures publiques
-- Pas de `print` — utiliser Loguru
-- `pathlib.Path` pour les chemins (pas de `os.path`)
-- Tests pytest **avec fixtures** (pas de boilerplate dupliqué)
-- Loguru en **JSON** (`serialize=True`) sur fichier, coloré en console
-
----
-
-## 🆘 Bloqué·e ?
+## Bloqué·e ?
 
 1. **Swagger** : ouvre `http://localhost:8000/docs` — souvent le plus
    rapide pour débugger.
